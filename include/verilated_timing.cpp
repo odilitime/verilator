@@ -31,12 +31,12 @@ void VlCoroutineHandle::resume() {
     // main process
     if (VL_LIKELY(m_coro)) {
         VL_DEBUG_IF(VL_DBG_MSGF("             Resuming: "); dump(););
-        if (m_process) {  // If process state is managed with std::process
-            if (m_process->state() == VlProcess::KILLED) {
+        if (m_processp) {  // If process state is managed with std::process
+            if (m_processp->state() == VlProcess::KILLED) {
                 m_coro.destroy();
             } else {
-                m_process->state(VlProcess::RUNNING);
-                VlProcess::currentp(m_process.get());
+                m_processp->state(VlProcess::RUNNING);
+                VlProcess::currentp(m_processp);
                 m_coro();
                 VlProcess::currentp(nullptr);
             }
@@ -44,7 +44,9 @@ void VlCoroutineHandle::resume() {
             VlProcess::currentp(nullptr);
             m_coro();
         }
+        // Drop process with coro: after resume a new handle owns any re-suspend.
         m_coro = nullptr;
+        m_processp = nullptr;
     }
 }
 
